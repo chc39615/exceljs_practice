@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>測試檔案</title>
+
+    <!-- CSS only -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+        integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+
+    <!-- JS, Popper.js, and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+        integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous">
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"
+        integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous">
+    </script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"
+        integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous">
+    </script>
+    <!-- ExcelJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/6.26.0/polyfill.js"></script>
+    <!-- 因為 3.8.0 之後的版本有新加的功能，造成 IE 無法載入，所以如果要相容 IE 就先使用 3.8.0 版的，之後如果有需要新的功能，再想辦法透過 polyfill 處理 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/3.8.0/exceljs.js"
+        integrity="sha512-vwSn7EltjzuN+K9iDCs+g39sPCoOxGjrJw7XoTELF8gg8r54+Pm+arEBxhJUkbd8jigd7g9hXJ0ja+mWJJbW6w=="
+        crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <div class="page-content">
+        <table class="table table-javascript">
+            <thead>
+                <tr role="row">
+                    <th data-title="支付工具" data-data="PaymentAgent" class="sorting_disabled" rowspan="1" colspan="1"
+                        style="width: 256px;">支付工具</th>
+                    <th data-title="通路名稱" data-data="StoreName" class="sorting_disabled" rowspan="1" colspan="1"
+                        style="width: 336px;">通路名稱</th>
+                    <th data-title="儲值筆數" data-data="DepositCount" class="sorting_disabled" rowspan="1"
+                        style="width: 256px;">儲值筆數</th>
+                    <th data-title="本次儲值金額" data-data="TransAmount" class="sorting_disabled" colspan="1"
+                        style="width: 368px;">本次儲值金額</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr role="row" class="odd">
+                    <th rowspan="2" tabindex="0">委外代收</th>
+                    <td>貝克漢健康事業</td>
+                    <td>1</td>
+                    <td>20,000</td>
+                </tr>
+                <tr class="group">
+                    <td>總計</td>
+                    <td>1</td>
+                    <td>20,000</td>
+                </tr>
+                <tr role="row" class="even">
+                    <th rowspan="2" tabindex="0">其他</th>
+                    <td>橘子支活動獎勵</td>
+                    <td>2</td>
+                    <td>200</td>
+                </tr>
+                <tr class="group">
+                    <td>總計</td>
+                    <td>2</td>
+                    <td>200</td>
+                </tr>
+                <tr role="row" class="odd">
+                    <th rowspan="2" tabindex="0">null</th>
+                    <td></td>
+                    <td>3</td>
+                    <td>4,100</td>
+                </tr>
+                <tr class="group">
+                    <td>總計</td>
+                    <td>3</td>
+                    <td>4,100</td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+    <div>
+        <button id="btnDownload" type="button" value="download">Download</button>
+    </div>
+
+    <script type="text/javascript">
+        $("#btnDownload").click(function () {
+            exportExcel($(".table-javascript"), "test.xlsx");
+        });
+
+
+
+        function exportExcel(tableElem, fileName) {
+
+            // 建立 ExcelJS 物件
+            const workbook = new ExcelJS.Workbook();
+
+            let now = new Date();
+
+            workbook.creator = "Gamapay";
+            workbook.lastModifiedBy = "Gamapay";
+            workbook.created = now;
+            workbook.modified = now;
+            workbook.lastPrinted = now;
+
+            // set workbook dates to 1904 date system
+            workbook.properties.date1904 = true;
+
+            // add worksheet
+            const sheet = workbook.addWorksheet("Sheet1");
+
+            // 建立 header
+            let headerTrs = tableElem.children("thead").children("tr");
+            for (var i = 0; i < headerTrs.length; i++) {
+                let headerThs = $(headerTrs[i]).children("th");
+                let totalColspan = 0;
+                for (var j = 0; j < headerThs.length; j++) {
+                    // 現在的行數
+                    let currRow = sheet.getRow(i);
+
+                    // 現在的格子
+                    let currCell = {
+                        c: j + totalColspan,
+                        r: i
+                    };
+
+                    // 目前的 th 物件
+                    let elemTh = $(headerThs[j]);
+
+                    // colspan
+                    let colspan = !elemTh.attr("colspan") ? "2" : elemTh.attr("colspan");
+
+                    // rowspan
+                    let rowspan = !elemTh.attr("rowspan") ? "1" : elemTh.attr("rowspan");
+
+                    // 合併欄位
+                    if (colspan != 1) {
+                        let mergeStart = currCell;
+                        let mergeEnd = {
+                            c: currCell.c + parseInt(colspan) - 1,
+                            r: currCell.r
+                        };
+
+                        sheet.mergeCells(parseCellString(mergeStart) + ":" + parseCellString(mergeEnd));
+                        
+                        totalColspan++;
+
+
+                    }
+
+                    let cell = sheet.getCell(parseCellString(currCell));
+                   
+                    console.log(elemTh.text());
+
+                    console.log(elemTh);
+                    currRow.getCell(currCell.c + 1).value = elemTh.text();
+
+                    // cell.value = elemTh.val();
+
+                    // console.log(parseCellString(currCell));
+
+                    // console.log(headerThs[j]);
+                    // console.log(colspan);
+                    // console.log(rowspan);
+                    // console.log($(headerThs[j]).text());
+                }
+            }
+
+            console.log(sheet);
+
+            // sheet.addTable({
+            //     name: "Test",
+            //     ref: "A1",
+            //     headerRow: true,
+            //     totalsRow: false,
+            //     columns: [{
+            //             name: "支付工具"
+            //         },
+            //         {
+            //             name: "通路名稱"
+            //         },
+            //         {
+            //             name: "儲值筆數"
+            //         },
+            //         {
+            //             name: "本次儲值金額"
+            //         }
+            //     ],
+            //     rows: [
+            //         ["委外代收", "貝克漢健康事業", 1, 20000],
+            //         ["", "總計", 1, 20000],
+            //         ["其它", "橘子支付活動獎勵", 2, 200],
+            //         ["", "總計", 2, 200],
+            //         ["null", "", 3, 4100],
+            //         ["", "總計", 3, 4100]
+            //     ]
+            // });
+
+        }
+
+        function parseCellString(cellElem) {
+            // 目前先定義A-Z，之後有需要再加
+            var colArray = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R",
+                "S", "T", "U", "V", "W", "X", "Y", "Z"
+            ];
+            var r = cellElem.r + 1;
+
+            return colArray[cellElem.c + 1] + r;
+
+        }
+
+        function saveByteArray(reportName, byte) {
+            var blob = new Blob([byte], {
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            });
+            var link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            var filename = reportName;
+            link.download = filename;
+            link.click();
+        };
+
+        function saveFile(fileName, byte) {
+            var blob = new Blob([byte], {
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            })
+            if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+                // for IE
+                window.navigator.msSaveOrOpenBlob(blob, fileName);
+            } else {
+                // other browsers
+                var a = $("<a style='display: none;'/>");
+                var url = window.URL.createObjectURL(blob, {
+                    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                });
+                a.attr("href", url);
+                a.attr("download", fileName);
+                $("body").append(a);
+                a[0].click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+            }
+        }
+    </script>
+
+</body>
+
+</html>
